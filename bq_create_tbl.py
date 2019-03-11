@@ -5,7 +5,6 @@ def create_tbl():
               .from_service_account_json('.config/jf-project-20190218-361593308de1.json'))
     dataset_ref = client.dataset('my_dataset')
  
-    client.in
     schema = [
         bigquery.SchemaField('registration_dttm', 'TIMESTAMP', mode='NULLABLE'),
         bigquery.SchemaField('id', 'INTEGER', mode='NULLABLE'),
