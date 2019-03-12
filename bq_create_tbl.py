@@ -16,7 +16,7 @@ def create_tbl():
         bigquery.SchemaField('cc', 'STRING', mode='NULLABLE'),
         bigquery.SchemaField('country', 'STRING', mode='NULLABLE'),
         bigquery.SchemaField('birthdate', 'STRING', mode='NULLABLE'),
-        bigquery.SchemaField('salary', 'STRING', mode='NULLABLE'),
+        bigquery.SchemaField('salary', 'FLOAT', mode='NULLABLE'),
         bigquery.SchemaField('title', 'STRING', mode='NULLABLE'),
         bigquery.SchemaField('comments', 'STRING', mode='NULLABLE')
     ]
