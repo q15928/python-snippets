@@ -1,11 +1,25 @@
 from google.cloud import bigquery
 import time
+import os
+
+# credential file
+credential_file = '.config/jf-project-20190218-361593308de1.json'
+
+
+def tbl_exists(dataset_id, table_id):
+    """
+    Check if the table already exists
+    """
+    dataset_ref = client.dataset(dataset_id)
+    table_ref = dataset_ref.table(table_id)
+    try:
+        client.get_table(table_ref)
+        return True
+    except Exception:
+        return False
+
 
 def load_tbl(dataset_id, table_id, local_file):
-    client = (bigquery
-        .Client
-        .from_service_account_json('.config/jf-project-20190218-361593308de1.json'))
-    
     dataset_ref = client.dataset(dataset_id)
     table_ref = dataset_ref.table(table_id)
     job_config = bigquery.LoadJobConfig()
@@ -24,17 +38,31 @@ def load_tbl(dataset_id, table_id, local_file):
     
     job.result()
 
-
     print('Loaded {} rows into {}:{}, took {:.2f}s'.format(
         job.output_rows, dataset_id, table_id, time.time() - t0
     ))
 
+
 if __name__ == '__main__':
-    local_file = './data/user.csv'
+    # setup bigquery client
+    if os.path.exists(credential_file):
+        client = (bigquery
+            .Client
+            .from_service_account_json(credential_file))
+    else:
+        # use os env variable
+        client = bigquery.Client()
+
+    local_file = './data/userdata1.csv'
     dataset_id = 'my_dataset'
     table_id = 'userdata'
 
     try:
-        load_tbl(dataset_id, table_id, local_file)
+        if tbl_exists(dataset_id, table_id):
+            load_tbl(dataset_id, table_id, local_file)
+        else:
+            print('{}:{} is not found, please create the table.'.format(
+                dataset_id, table_id
+            ))
     except Exception as e:
         print('error - ', e)
