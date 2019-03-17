@@ -1,6 +1,7 @@
-from google.cloud import bigquery
 import time
 import os
+import argparse
+from google.cloud import bigquery
 
 # credential file
 credential_file = '.config/jf-project-20190218-361593308de1.json'
@@ -20,11 +21,17 @@ def tbl_exists(dataset_id, table_id):
 
 
 def load_tbl(dataset_id, table_id, local_file):
-    dataset_ref = client.dataset(dataset_id)
-    table_ref = dataset_ref.table(table_id)
+    table_ref = client.dataset(dataset_id).table(table_id)
+
+    # get the extention of the file
+    ext = os.path.splitext(local_file)[1]
+
     job_config = bigquery.LoadJobConfig()
-    job_config.source_format = bigquery.SourceFormat.CSV
-    job_config.skip_leading_rows = 1
+    if ext.lower() == '.csv':
+        job_config.source_format = bigquery.SourceFormat.CSV    
+        job_config.skip_leading_rows = 1
+    elif ext.lower() == '.parquet':
+        job_config.source_format = bigquery.SourceFormat.PARQUET
     job_config.autodetect = False
 
     t0 = time.time()
@@ -53,9 +60,16 @@ if __name__ == '__main__':
         # use os env variable
         client = bigquery.Client()
 
-    local_file = './data/userdata1.csv'
-    dataset_id = 'my_dataset'
-    table_id = 'userdata'
+    parser = argparse.ArgumentParser("Load data into bigquery")
+    parser.add_argument("-t", "--table", dest="table", 
+        default='my_dataset.userdata', help="Fully-qualified destination table name, i.e. dataset.tablename")
+    parser.add_argument("-s", "--source", dest="source", 
+        default='./data/userdata1.parquet', help="Name of local file to import")
+    args = parser.parse_args()
+
+    local_file = args.source
+    dataset_id = args.table.split('.')[0]
+    table_id = args.table.split('.')[1]
 
     try:
         if tbl_exists(dataset_id, table_id):
