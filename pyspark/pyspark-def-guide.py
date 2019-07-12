@@ -116,9 +116,9 @@ df.repartition(5, col("DEST_COUNTRY_NAME")).coalesce(2)
 
 # Chapter 6
 df = spark.read.format("csv")\
-.option("header", "true")\
-.option("inferSchema", "true")\
-.load("/data/retail-data/by-day/2010-12-01.csv")
+  .option("header", "true")\
+  .option("inferSchema", "true")\
+  .load("/data/retail-data/by-day/2010-12-01.csv")
 df.printSchema()
 df.createOrReplaceTempView("dfTable")
 
@@ -183,11 +183,11 @@ df.select(initcap(col("Description"))).show()
 # in Python
 from pyspark.sql.functions import lit, ltrim, rtrim, rpad, lpad, trim
 df.select(
-ltrim(lit(" HELLO ")).alias("ltrim"),
-rtrim(lit(" HELLO ")).alias("rtrim"),
-trim(lit(" HELLO ")).alias("trim"),
-lpad(lit("HELLO"), 3, " ").alias("lp"),
-rpad(lit("HELLO"), 10, " ").alias("rp")).show(2)
+  ltrim(lit(" HELLO ")).alias("ltrim"),
+  rtrim(lit(" HELLO ")).alias("rtrim"),
+  trim(lit(" HELLO ")).alias("trim"),
+  lpad(lit("HELLO"), 3, " ").alias("lp"),
+  rpad(lit("HELLO"), 10, " ").alias("rp")).show(2)
 # -- in SQL
 # SELECT
 # ltrim(' HELLLOOOO '),
@@ -212,7 +212,7 @@ df.select(
 # replace strings
 from pyspark.sql.functions import translate
 df.select(translate(col("Description"), "LEET", "1337"),col("Description"))\
-.show(2)
+  .show(2)
 # -- in SQL
 # SELECT translate(Description, 'LEET', '1337'), Description FROM dfTable
 
