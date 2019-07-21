@@ -1,5 +1,5 @@
 """
-Output the list of factors composing of a given number using recursive function
+Output the list of factors composing of a given number using recursive function 
 """
 import copy
 

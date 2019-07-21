@@ -2,6 +2,11 @@
 # pyspark snippets extracted from <Spark - The Definitive Guide>
 #######################
 
+spark = SparkSession.builder \
+    .master("local[*]") \
+    .appName("stock data") \
+    .config("spark.sql.shuffle.partitions", "5") \
+    .getOrCreate()
 
 # Chapter 5
 df = spark.read.format("json").load("/data/flight-data/json/2015-summary.json")
@@ -489,6 +494,17 @@ from pyspark.sql.functions import col
 #                       CURRENT ROW) as maxPurchase
 # FROM dfWithDate WHERE CustomerId IS NOT NULL ORDER BY CustomerId
 
+# get rolling mean for last 7 days
+stmt = """
+    SELECT *, mean(Close) OVER(
+        ORDER BY Date ASC NULLS LAST
+        RANGE BETWEEN INTERVAL 7 DAYS PRECEDING AND CURRENT ROW
+        ) AS mean_7d
+    FROM df"""
+tmp_df = spark.sql(stmt)
+tmp_df.show()
+
+
 dfNoNull = dfWithDate.drop()
 dfNoNull.createOrReplaceTempView("dfNoNull")
 
@@ -544,6 +560,16 @@ graduateProgram.join(person, joinExpression, joinType).show()
 # ON person.graduate_program = graduateProgram.id
 
 ## Chapter 9
+# in Python
+csvFile = spark.read.format("csv")\
+  .option("header", "true")\
+  .option("mode", "FAILFAST")\
+  .option("inferSchema", "true")\
+  .load("/data/flight-data/csv/2010-summary.csv")
+
+csvFile.write.format("csv").mode("overwrite").option("sep", "\t")\
+  .save("/tmp/my-tsv-file.tsv")
+
 driver = "org.sqlite.JDBC"
 path = "/data/flight-data/jdbc/my-sqlite.db"
 url = "jdbc:sqlite:" + path
