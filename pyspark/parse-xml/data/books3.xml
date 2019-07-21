@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<catalog>
+   <book id="bk119">
+      <author>Feng, Jason</author>
+      <title>Playground</title>
+      <description>This is the place where Jason puts his fun stuff
+      mainly related with Python, R and GCP.</description>
+   </book>
+</catalog>
