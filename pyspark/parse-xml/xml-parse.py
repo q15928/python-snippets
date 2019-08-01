@@ -1,4 +1,6 @@
 """
+Parse and extract data from XML files with PySpark
+
 This script is a PySpark job to parse xml files into DataFrame, then save as csv files.
     1. read each xml file into an RDD
     2. parse the xml tree to get the records which are flattened as RDDs
@@ -39,7 +41,7 @@ def parse_xml(rdd):
     then return a list of list.
     """
     results = []
-    root = ET.fromstring(rdd[1])
+    root = ET.fromstring(rdd[0])
     # tree = ET.parse("./data/books3.xml")
     # root = tree.getroot()
 
@@ -66,11 +68,16 @@ if __name__ == "__main__":
         .builder\
         .getOrCreate()
 
+    # define the schema
     my_schema = set_schema()
-    file_rdd = spark.sparkContext.wholeTextFiles("./data/*.xml")
+    # read each xml file as one row, then convert to RDD
+    file_rdd = spark.read.text("./data/*.xml", wholetext=True).rdd
+    # parse xml tree, extract the records and transform to new RDD
     records_rdd = file_rdd.flatMap(parse_xml)
+    # convert RDDs to DataFrame with the pre-defined schema
     book_df = records_rdd.toDF(my_schema)
-    # book_df.show()
+
+    # write to csv
     book_df.write.format("csv").mode("overwrite")\
         .save("./output")
 
