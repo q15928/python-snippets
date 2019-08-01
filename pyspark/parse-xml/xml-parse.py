@@ -42,8 +42,6 @@ def parse_xml(rdd):
     """
     results = []
     root = ET.fromstring(rdd[0])
-    # tree = ET.parse("./data/books3.xml")
-    # root = tree.getroot()
 
     for b in root.findall('book'):
         rec = []
