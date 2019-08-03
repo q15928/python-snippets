@@ -47,9 +47,8 @@ def parse_xml(rdd):
         rec = []
         rec.append(b.attrib['id'])
         for e in ELEMENTS_TO_EXTRAT:
-            value = None
             if b.find(e) is None:
-                rec.append(value)
+                rec.append(None)
                 continue
             value = b.find(e).text
             if e == 'price':
