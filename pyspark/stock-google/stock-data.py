@@ -56,24 +56,3 @@ tmp_df.show()
 df.where("Date >= '2018-07-20' and Date <= '2018-07-28'") \
     .select(F.avg("Close")) \
     .show()
-
-
-
-df = spark.createDataFrame([(17, "2017-03-10T15:27:18+00:00"),
-                        (13, "2017-03-15T12:27:18+00:00"),
-                        (19, "2017-03-15T02:27:18+00:00"),
-                        (25, "2017-03-18T11:27:18+00:00")],
-                        ["Close", "timestampGMT"])
-df = df.withColumn('Symbol', F.lit('GOOG'))
-df = df.withColumn('timestampGMT', df.timestampGMT.cast('timestamp'))
-df = df.withColumn('Date', F.to_date('timestampGMT').cast('timestamp'))
-
-
-days = lambda d: d * 24 * 60 * 60
-
-win_spec = Window.partitionBy(F.col("Symbol")) \
-    .orderBy(F.col("Date").cast("long")) \
-    .rangeBetween(-days(7), 0)
-col_mean_7d = F.avg("Close").over(win_spec)
-tmp_df = df.withColumn("mean_7d", col_mean_7d)
-tmp_df.show()
