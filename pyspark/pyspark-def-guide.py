@@ -56,6 +56,13 @@ df.withColumn("numberOne", lit(1)).show(2)
 df.withColumn("withinCountry", expr("ORIGIN_COUNTRY_NAME == DEST_COUNTRY_NAME"))\
   .show(2)
 
+# conditional clause
+# Add a column to voter_df for a voter based on their position
+voter_df = voter_df.withColumn('random_val',
+                               F.when(voter_df.TITLE == 'Councilmember', F.rand())
+                               .when(voter_df.TITLE == 'Mayor', 2)
+                               .otherwise(0)
+)
 # rename column
 df.withColumnRenamed("DEST_COUNTRY_NAME", "dest").columns
 
@@ -68,6 +75,9 @@ df.withColumn("count2", col("count").cast("long"))
 # filter rows
 df.where(col("count") < 2).where(col("ORIGIN_COUNTRY_NAME") != "Croatia")\
   .show(2)
+
+# Filter out voter_df where the VOTER_NAME contains an underscore
+voter_df = voter_df.filter(~ F.col('VOTER_NAME').contains('_'))
 
 # get unique rows
 df.select("ORIGIN_COUNTRY_NAME", "DEST_COUNTRY_NAME").distinct().count()
@@ -178,6 +188,19 @@ df.stat.freqItems(["StockCode", "Quantity"]).show()
 # in Python
 from pyspark.sql.functions import monotonically_increasing_id
 df.select(monotonically_increasing_id()).show(2)
+
+# Adding an ID Field
+# Select all the unique council voters
+voter_df = df.select(df["VOTER NAME"]).distinct()
+
+# Add a ROW_ID
+voter_df = voter_df.withColumn('ROW_ID', F.monotonically_increasing_id())
+
+# Determine the highest ROW_ID and save it in previous_max_ID
+previous_max_ID = voter_df_march.select(F.max('ROW_ID')).collect()[0][0]
+
+# Add a ROW_ID column to voter_df_april starting at the desired value
+voter_df_april = voter_df_april.withColumn('ROW_ID', previous_max_ID + F.monotonically_increasing_id())
 
 # capitalize every word in a given string when that word is separated from another by a space
 from pyspark.sql.functions import initcap
@@ -345,6 +368,45 @@ df.withColumn("splitted", split(col("Description"), " "))\
 # SELECT Description, InvoiceNo, exploded
 # FROM (SELECT *, split(Description, " ") as splitted FROM dfTable)
 # LATERAL VIEW explode(splitted) as exploded
+
+# Add a new column called splits separated on whitespace
+voter_df = voter_df.withColumn('splits', F.split(F.col('VOTER_NAME'), '\s+'))
+
+# Create a new column called first_name based on the first item in splits
+voter_df = voter_df.withColumn('first_name', F.col('splits').getItem(0))
+
+# Get the last entry of the splits list and create a column called last_name
+voter_df = voter_df.withColumn('last_name', F.col('splits').getItem(F.size('splits') - 1))
+
+# UDF
+def getFirstAndMiddle(names):
+  # Return a space separated string of names
+  return ' '.join(names[:-1])
+
+# voter_df.show()
+# Define the method as a UDF
+udfFirstAndMiddle = F.udf(getFirstAndMiddle, StringType())
+
+# Create a new column using your UDF
+voter_df = voter_df.withColumn('first_and_middle_name', udfFirstAndMiddle(F.col('splits')))
+
+# if we need to use the UDF in Spark SQL, we need to register it
+_ = spark.udf.register('firstAndMiddle', getFirstAndMiddle)
+voter_df.createOrReplaceTempView('voter')
+spark.sql("SELECT firstAndMiddle(splits) AS first_and_middle_name FROM voter")
+
+# NOTE: this can be done with `slice` function since Spark 2.4
+# https://spark.apache.org/docs/latest/api/python/pyspark.sql.html#pyspark.sql.functions.slice
+def retriever(cols, colcount):
+  # Return a list of dog data
+  return cols[4:colcount]
+
+# Define the method as a UDF
+udfRetriever = F.udf(retriever, ArrayType(StringType()))
+
+# Create a new column using your UDF
+split_df = split_df.withColumn('dog_list', udfRetriever(split_df.split_cols, split_df.colcount))
+
 
 # work with JSON
 from pyspark.sql.functions import from_json
